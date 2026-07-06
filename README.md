@@ -10,6 +10,11 @@ The core loop is:
 
 `Observe → Recommend → Explain → Confirm or Adjust → Store as Plant Memory`
 
+## Live Demo
+
+Production: https://greenmate-demo.vercel.app
+
+
 ## Core features
 
 - Daily Garden Brief with real local weather
@@ -167,36 +172,6 @@ npm start
 
 Then open `http://localhost:4173`.
 
-## Environment variables
-
-### Frontend — `frontend/.env.local`
-
-```dotenv
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-- `VITE_SUPABASE_URL` — required
-- `VITE_SUPABASE_ANON_KEY` — required
-- `VITE_API_BASE_URL` — **not currently used**; the frontend uses relative `/api`
-  requests. Use a deployment rewrite when the backend is hosted separately.
-
-### Backend — `backend/.env.local`
-
-```dotenv
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your_supabase_anon_key
-PORT=4173
-```
-
-- `SUPABASE_URL` — required
-- `SUPABASE_ANON_KEY` — required
-- `PORT` — optional; defaults to `4173`
-
-Open-Meteo and the browser reverse-geocoding endpoint do not require project API
-keys. Never commit `.env` or `.env.local` files. Never place a Supabase
-`service_role` key in the frontend.
-
 ## Supabase setup
 
 The MVP requires:
@@ -219,6 +194,36 @@ supabase db push
 
 Do not run both the full snapshot and historical migrations against the same fresh
 database.
+
+## Environment variables
+
+### Frontend — `frontend/.env.local`
+
+```dotenv
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+- `VITE_SUPABASE_URL` — required
+- `VITE_SUPABASE_ANON_KEY` — required
+- `VITE_API_BASE_URL` — optional; defaults to http://localhost:5173.
+
+### Backend — `backend/.env.local`
+
+```dotenv
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key
+PORT=4173
+```
+
+- `SUPABASE_URL` — required
+- `SUPABASE_ANON_KEY` — required
+- `PORT` — optional; defaults to `4173`
+
+Open-Meteo and the browser reverse-geocoding endpoint do not require project API
+keys. Never commit `.env` or `.env.local` files. Never place a Supabase
+`service_role` key in the frontend.
+
 
 ### Demo Garden
 
@@ -278,29 +283,104 @@ also guide development but are not all loaded at runtime.
 
 ## Deployment
 
-Recommended MVP topology:
+## Deployment
 
-- **Frontend:** Vercel
-- **Backend:** Render or Railway
-- **Database and image storage:** Supabase
+GreenMate is deployed with a separated frontend/backend setup:
 
-### Frontend deployment
+| Part | Platform | Purpose |
+|---|---|---|
+| Frontend | Vercel | Hosts the React/Vite web app |
+| Backend | Render | Hosts the Node/Express API |
+| Database | Supabase | Stores plant profiles, care records, and activity data |
 
-- Build command: `npm run build`
-- Output directory: `frontend/dist`
-- Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` at build time.
-- Rewrite `/api/*` to the deployed backend origin because the frontend currently uses
-  relative API URLs.
 
-### Backend deployment
+### 1. Deploy the backend on Render
 
-- Start command: `npm run start --workspace @greenmate/backend`
-- Configure `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
-- Let Render/Railway supply `PORT`, or set it explicitly where required.
+1. Create a new **Web Service** on Render.
+2. Connect the GitHub repository.
+3. Set the root directory to:
 
-The current backend is a custom Node HTTP server and is **not automatically a Vercel
-Function**. Deploy it to Render/Railway as-is, or deliberately adapt its routes into
-Vercel Functions before choosing an all-Vercel topology.
+```text
+backend
+```
+
+4. Use the backend start command:
+
+```bash
+npm install
+npm start
+```
+
+or, if configured separately:
+
+```bash
+npm install
+node server.js
+```
+
+5. Add the required Render environment variables:
+
+```dotenv
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+PORT=4173
+CORS_ALLOWED_ORIGINS=https://greenmate-demo.vercel.app
+```
+
+6. Deploy the service and keep the generated Render URL for the frontend API base URL.
+
+### 2. Deploy the frontend on Vercel
+
+1. Import the same GitHub repository into Vercel.
+2. Select **Vite** as the application preset.
+3. Set the root directory to:
+
+```text
+frontend
+```
+
+4. Use the following build settings:
+
+```text
+Install Command: npm install
+Build Command: npm run build
+Output Directory: dist
+```
+
+5. Add the required Vercel environment variables:
+
+```dotenv
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_API_BASE_URL=your_render_backend_url
+```
+
+For the production demo, the API base URL points to the Render backend.
+
+6. Deploy the frontend.
+
+### 3. Configure production domain and CORS
+
+The production frontend domain is:
+
+```text
+https://greenmate-demo.vercel.app
+```
+
+The backend CORS configuration must allow this frontend domain.  
+If the Vercel domain changes, update the backend CORS allowlist and redeploy the Render service.
+
+### Deployment flow
+
+```text
+Browser
+  ↓
+Vercel Frontend
+  ↓
+Render Backend API
+  ↓
+Supabase Database
+```
 
 ## Security
 
