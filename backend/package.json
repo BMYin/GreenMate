@@ -1,0 +1,12 @@
+{
+  "name": "@greenmate/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env.local --env-file-if-exists=../frontend/.env.local server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.0"
+  }
+}

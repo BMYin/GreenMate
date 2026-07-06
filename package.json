@@ -1,0 +1,16 @@
+{
+  "name": "greenmate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @greenmate/frontend",
+    "seed:demo": "node --env-file-if-exists=backend/.env.local --env-file-if-exists=frontend/.env.local backend/scripts/seedDemo.js",
+    "start": "npm run build && npm run start --workspace @greenmate/backend",
+    "test": "node --test"
+  }
+}

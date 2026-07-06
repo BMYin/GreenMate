@@ -1,0 +1,3 @@
+export function getMockExistingTasks() {
+  return [];
+}
