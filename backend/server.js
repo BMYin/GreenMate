@@ -13,6 +13,12 @@ import {
 
 const frontendDirectory = fileURLToPath(new URL("../frontend/dist/", import.meta.url));
 const port = Number(process.env.PORT || 4173);
+const configuredFrontendOrigins = new Set(
+  (process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_URL || "")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .filter(Boolean)
+);
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -23,6 +29,12 @@ const contentTypes = {
 
 function today() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function isAllowedOrigin(origin) {
+  return configuredFrontendOrigins.has(origin) ||
+    /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
+    /^https:\/\/green-mate-frontend[^.]*\.vercel\.app$/.test(origin);
 }
 
 async function readJsonBody(request) {
@@ -56,6 +68,19 @@ async function serveFile(response, pathname) {
 
 const server = createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host}`);
+  const origin = request.headers.origin;
+
+  if (origin && isAllowedOrigin(origin)) {
+    response.setHeader("Access-Control-Allow-Origin", origin);
+    response.setHeader("Vary", "Origin");
+    response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  }
+
+  if (request.method === "OPTIONS" && url.pathname.startsWith("/api/")) {
+    response.writeHead(204).end();
+    return;
+  }
 
   if (request.method === "GET" && url.pathname === "/api/today") {
     // The API owns weather resolution and care generation; React only supplies settings.
