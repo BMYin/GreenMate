@@ -1432,7 +1432,8 @@ export function App() {
         query.set("latitude", String(settings.latitude));
         query.set("longitude", String(settings.longitude));
       }
-      const response = await fetch(`/api/today?${query}`);
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "";
+      const response = await fetch(`${apiBaseUrl}/api/today?${query}`);
       if (!response.ok) throw new Error("Today’s care could not be refreshed. Please try again.");
 
       const carePlan = await response.json();
