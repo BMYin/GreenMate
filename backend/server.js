@@ -33,6 +33,7 @@ function today() {
 
 function isAllowedOrigin(origin) {
   return configuredFrontendOrigins.has(origin) ||
+    origin === "https://greenmate-demo.vercel.app" ||
     /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
     /^https:\/\/green-mate-frontend[^.]*\.vercel\.app$/.test(origin);
 }
